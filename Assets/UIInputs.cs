@@ -68,11 +68,6 @@ public class UIInputs : MonoBehaviour
             return;
         
         _pause = !_pause;
-        
-        if (PlayAreaPannelGO == null)
-            return;
-        
-        PlayAreaPannelGO.SetActive(!PlayAreaPannelGO.activeInHierarchy);
     }
     
     

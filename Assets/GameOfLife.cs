@@ -81,7 +81,6 @@ public class Grid
             if (value > 0)
             {
                 _x = value;
-                GenerateGrid();
                 return;
             }
             Debug.Log("Can't use negative or null values.");
@@ -95,7 +94,6 @@ public class Grid
             if (value > 0)
             {
                 _y = value;
-                GenerateGrid();
                 return;
             }
             Debug.Log("Can't use negative or null values.");
@@ -221,10 +219,10 @@ public class Grid
 
     public void CalculateNextStates()
     {
-        bool[][] nextGrid = new bool[_x][];
+        bool[][] nextGrid = new bool[_cells.Length][];
         for (int x = 0; x < _cells.Length; x++)
         {
-            nextGrid[x] = new bool[_y];
+            nextGrid[x] = new bool[_cells[x].Length];
         }
         
         for (int x = 0; x < _cells.Length; x++)
@@ -277,9 +275,9 @@ public class Grid
     private void UpdateCubes()
     {
         _generations++;
-        for (int x = 0; x < _x; x++)
+        for (int x = 0; x < _cells.Length; x++)
         {
-            for (int y = 0; y < _y; y++)
+            for (int y = 0; y < _cells[x].Length; y++)
             {
                 if (_cells[x][y])
                     _cubes[x][y].GetComponent<MeshRenderer>().material.color = Color.white;
@@ -291,7 +289,7 @@ public class Grid
 
     public void InverseCell(int x, int y)
     {
-        if (x < 0 || y < 0 || x >= _x || y >= _y) return;
+        if (x < 0 || y < 0 || x >= _cells.Length || y >= _cells[x].Length) return;
 
         _cells[x][y] = !_cells[x][y];
         
