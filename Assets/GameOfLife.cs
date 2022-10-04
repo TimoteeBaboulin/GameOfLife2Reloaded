@@ -1,6 +1,8 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using System.Linq;
 using Random = UnityEngine.Random;
 
 public class GameOfLife : MonoBehaviour
@@ -46,6 +48,16 @@ public class GameOfLife : MonoBehaviour
     {
         _cellGrid.GenerateGrid();
     }
+
+    public void BackIntime()
+    {
+        _cellGrid.BackInTime();
+    }
+
+    public void ForwardOneGeneration()
+    {
+        _cellGrid.CalculateNextStates();
+    }
 }
 
 public class Grid
@@ -53,6 +65,7 @@ public class Grid
     public static Grid Instance;
 
     private float _RNG = 0f;
+
     public float RNG
     {
         get => _RNG;
@@ -65,14 +78,15 @@ public class Grid
     }
 
     private int _generations = 0;
+
     public int Generations
     {
         get => _generations;
     }
-    
+
     private int _x;
     private int _y;
-    
+
     public int X
     {
         get => _x;
@@ -83,9 +97,11 @@ public class Grid
                 _x = value;
                 return;
             }
+
             Debug.Log("Can't use negative or null values.");
         }
     }
+
     public int Y
     {
         get => _y;
@@ -96,12 +112,15 @@ public class Grid
                 _y = value;
                 return;
             }
+
             Debug.Log("Can't use negative or null values.");
         }
     }
 
     private bool[][] _cells;
-    private GameObject[][] _cubes;
+    private List<bool[][]> _history;
+
+private GameObject[][] _cubes;
 
     public Grid()
     {
@@ -110,6 +129,7 @@ public class Grid
         Instance = this;
 
         _cells = new bool[_x][];
+        _history = new List<bool[][]>();
         GenerateGrid();
     }
 
@@ -120,6 +140,7 @@ public class Grid
         Instance = this;
 
         _cells = new bool[_x][];
+        _history = new List<bool[][]>();
         GenerateGrid();
     }
 
@@ -131,6 +152,7 @@ public class Grid
         Instance = this;
 
         _cells = new bool[_x][];
+        _history = new List<bool[][]>();
         GenerateGrid();
     }
 
@@ -163,7 +185,7 @@ public class Grid
                     _cells[x][y] = true;
             }
         }
-        
+
         GenerateCubes();
     }
 
@@ -172,6 +194,7 @@ public class Grid
         DestroyCubes();
         
         _cells = new bool[_x][];
+        _history.Clear();
     }
     
     private void DestroyCubes()
@@ -219,6 +242,7 @@ public class Grid
 
     public void CalculateNextStates()
     {
+        _history.Add(_cells);
         bool[][] nextGrid = new bool[_cells.Length][];
         for (int x = 0; x < _cells.Length; x++)
         {
@@ -247,7 +271,7 @@ public class Grid
         }
 
         _cells = nextGrid;
-        
+
         UpdateCubes();
     }
 
@@ -297,5 +321,38 @@ public class Grid
             _cubes[x][y].GetComponent<MeshRenderer>().material.color =  Color.white;
         else
             _cubes[x][y].GetComponent<MeshRenderer>().material.color =  Color.black;
+    }
+
+    public void BackInTime()
+    {
+        if (_history.Count <= 0) return;
+
+        int compteur = 1;
+
+        while (compteur < _history.Count - 1 && Equals(_history[^compteur]))
+        {
+            compteur++;
+        }
+        
+        _cells = _history[^compteur];
+        _history.RemoveRange(_history.Count - compteur, compteur);
+        _generations -= compteur + 1;
+        
+        UpdateCubes();
+    }
+
+    private bool Equals(bool[][] array)
+    {
+        if (_cells.Length != array.Length) return false;
+        for (int x = 0; x < _cells.Length; x++)
+        {
+            if (_cells[x].Length != array[x].Length) return false;
+            for (int y = 0; y < _cells[x].Length; y++)
+            {
+                if (_cells[x][y] != array[x][y]) return false;
+            }
+        }
+
+        return true;
     }
 }

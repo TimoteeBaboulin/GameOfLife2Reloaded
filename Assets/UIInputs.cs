@@ -92,4 +92,14 @@ public class UIInputs : MonoBehaviour
         }
         Debug.Log("Please use numbers with no letters and no special characters.");
     }
+
+    /*public void Back()
+    {
+        GameOfLifeGO.GetComponent<GameOfLife>().BackIntime();
+    }
+
+    public void Forward()
+    {
+        GameOfLifeGO.GetComponent<GameOfLife>().ForwardOneGeneration();
+    }*/
 }
