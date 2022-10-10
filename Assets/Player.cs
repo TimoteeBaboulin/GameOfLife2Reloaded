@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -18,16 +19,9 @@ public class Player : MonoBehaviour
         Move();
         if (!Input.GetButtonDown("Fire1")) return;
 
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, 20))
-        {
-            Vector3 coordinates = hit.transform.position;
-            
-            Grid.Instance.InverseCell((int)coordinates.x, (int)coordinates.y);
-        }
-
+        Vector3 coordinates = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Debug.Log(coordinates);
+        CellGrid.Instance.InverseCell((int)Math.Floor(coordinates.x), (int)Math.Floor(coordinates.y));
     }
 
     private void Move()

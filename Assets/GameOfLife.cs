@@ -3,19 +3,22 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using System.Linq;
+using UnityEngine.Tilemaps;
 using Random = UnityEngine.Random;
 
 public class GameOfLife : MonoBehaviour
 {
-    private Grid _cellGrid;
+    private CellGrid _cellGrid;
     [SerializeField] private UIInputs UIScript;
     [SerializeField] private TextMeshProUGUI _textMeshPro;
+
+    public Tile tile;
 
     private Coroutine _running;
 
     private void Start()
     {
-        _cellGrid = new Grid(100,150);
+        _cellGrid = new CellGrid(100,150);
         Camera.main.transform.position = new Vector3(_cellGrid.X / 2, _cellGrid.Y / 2, -10);
     }
 
@@ -60,9 +63,9 @@ public class GameOfLife : MonoBehaviour
     }
 }
 
-public class Grid
+public class CellGrid
 {
-    public static Grid Instance;
+    public static CellGrid Instance;
 
     private float _RNG = 0f;
 
@@ -120,9 +123,11 @@ public class Grid
     private bool[][] _cells;
     private List<bool[][]> _history;
 
-private GameObject[][] _cubes;
+    private Tilemap _cubes;
+    private Tile _white = Resources.Load<Tile>("White");
+    private Tile _black = Resources.Load<Tile>("Black");
 
-    public Grid()
+    public CellGrid()
     {
         _x = 10;
         _y = 10;
@@ -133,7 +138,7 @@ private GameObject[][] _cubes;
         GenerateGrid();
     }
 
-    public Grid(int x, int y)
+    public CellGrid(int x, int y)
     {
         _x = x;
         _y = y;
@@ -144,11 +149,11 @@ private GameObject[][] _cubes;
         GenerateGrid();
     }
 
-    public Grid(Vector2Int vector)
+    public CellGrid(Vector2Int vector)
     {
         _x = vector.x;
         _y = vector.y;
-        
+
         Instance = this;
 
         _cells = new bool[_x][];
@@ -192,49 +197,43 @@ private GameObject[][] _cubes;
     private void DestroyCurrentGrid()
     {
         DestroyCubes();
-        
+
         _cells = new bool[_x][];
         _history.Clear();
     }
-    
+
     private void DestroyCubes()
     {
-        if (_cubes == null)
-            return;
-        
-        for (int x = 0; x < _cubes.Length; x++)
-        {
-            for (int y = 0; y < _cubes[x].Length; y++)
-            {
-                GameObject.Destroy(_cubes[x][y]);
-            }
-        }
+        if (_cubes == null) return;
+        _cubes.ClearAllTiles();
     }
-    
+
     private void GenerateCubes()
     {
-        _cubes = new GameObject[_x][];
+        if (_cubes == null)
+        {
+            var newObject = new GameObject();
+            newObject.AddComponent<UnityEngine.Grid>();
+            var tilemap = new GameObject();
+            tilemap.transform.SetParent(newObject.transform);
+            _cubes = tilemap.AddComponent<Tilemap>();
+            tilemap.AddComponent<TilemapRenderer>();
+
+            //_cubes = tilemap.GetComponent<Tilemap>();
+        }
 
         for (int x = 0; x < _cells.Length; x++)
         {
-            _cubes[x] = new GameObject[_y];
             for (int y = 0; y < _cells[x].Length; y++)
             {
-                //Generate GameObject and keep it in the array
-                GameObject newCell = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                _cubes[x][y] = newCell;
-                
-                //Set cube's position based on his place in the arrays
-                newCell.transform.position = new Vector3(x, y, 0);
-
                 //Set cube's color based on current cell
                 if (_cells[x][y])
                 {
-                    newCell.GetComponent<MeshRenderer>().material.color = Color.white;
+                    _cubes.SetTile(new Vector3Int(x, y, 0), _white);
                 }
                 else
                 {
-                    newCell.GetComponent<MeshRenderer>().material.color = Color.black;
+                    _cubes.SetTile(new Vector3Int(x, y, 0), _black);
                 }
             }
         }
@@ -248,20 +247,22 @@ private GameObject[][] _cubes;
         {
             nextGrid[x] = new bool[_cells[x].Length];
         }
-        
+
         for (int x = 0; x < _cells.Length; x++)
         {
             for (int y = 0; y < _cells[x].Length; y++)
             {
                 int neighbors = CalculateNeighbors(x, y);
-                
+
                 if (_cells[x][y])
                 {
                     if (neighbors == 2 || neighbors == 3)
                         nextGrid[x][y] = true;
                     else
                         nextGrid[x][y] = false;
-                } else {
+                }
+                else
+                {
                     if (neighbors == 3)
                         nextGrid[x][y] = true;
                     else
@@ -278,14 +279,14 @@ private GameObject[][] _cubes;
     private int CalculateNeighbors(int cellX, int cellY)
     {
         int count = 0;
-        
+
         for (int x = -1; x < 2; x++)
         {
             if (cellX + x < 0 || cellX + x >= _cells.Length)
                 continue;
             for (int y = -1; y < 2; y++)
             {
-                if (cellY + y < 0 || cellY + y >= _cells[cellX + x].Length || (y==0 && x==0))
+                if (cellY + y < 0 || cellY + y >= _cells[cellX + x].Length || (y == 0 && x == 0))
                     continue;
 
                 if (_cells[cellX + x][cellY + y])
@@ -303,10 +304,10 @@ private GameObject[][] _cubes;
         {
             for (int y = 0; y < _cells[x].Length; y++)
             {
-                if (_cells[x][y])
-                    _cubes[x][y].GetComponent<MeshRenderer>().material.color = Color.white;
+                if (_cells[x][y] )
+                    _cubes.SetTile(new Vector3Int(x, y, 0), _white);
                 else
-                    _cubes[x][y].GetComponent<MeshRenderer>().material.color = Color.black;
+                    _cubes.SetTile(new Vector3Int(x, y, 0), _black);
             }
         }
     }
@@ -316,11 +317,11 @@ private GameObject[][] _cubes;
         if (x < 0 || y < 0 || x >= _cells.Length || y >= _cells[x].Length) return;
 
         _cells[x][y] = !_cells[x][y];
-        
+
         if (_cells[x][y])
-            _cubes[x][y].GetComponent<MeshRenderer>().material.color =  Color.white;
+            _cubes.SetTile(new Vector3Int(x, y, 0), _white);
         else
-            _cubes[x][y].GetComponent<MeshRenderer>().material.color =  Color.black;
+            _cubes.SetTile(new Vector3Int(x, y, 0), _black);
     }
 
     public void BackInTime()
@@ -333,11 +334,11 @@ private GameObject[][] _cubes;
         {
             compteur++;
         }
-        
+
         _cells = _history[^compteur];
         _history.RemoveRange(_history.Count - compteur, compteur);
         _generations -= compteur + 1;
-        
+
         UpdateCubes();
     }
 

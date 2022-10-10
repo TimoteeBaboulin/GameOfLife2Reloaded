@@ -40,7 +40,7 @@ public class UIInputs : MonoBehaviour
                 return;
             }
 
-            Grid.Instance.X = parsedValue;
+            CellGrid.Instance.X = parsedValue;
             return;
         }
         Debug.Log("Please use numbers with no letters and no special characters.");
@@ -56,7 +56,7 @@ public class UIInputs : MonoBehaviour
                 return;
             }
 
-            Grid.Instance.Y = parsedValue;
+            CellGrid.Instance.Y = parsedValue;
             return;
         }
         Debug.Log("Please use numbers with no letters and no special characters.");
@@ -74,7 +74,7 @@ public class UIInputs : MonoBehaviour
 
     public void ChangeRNG(float value)
     {
-        Grid.Instance.RNG = value;
+        CellGrid.Instance.RNG = value;
     }
 
     public void ChangeSpeed(string value)
